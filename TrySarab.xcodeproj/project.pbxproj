@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8A5B7D592D7B921900F2AD34 /* PlayerStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5B7D582D7B921900F2AD34 /* PlayerStateMachine.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		8A08FA462D78ED3500A66EE7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		8A08FA2C2D78ED3400A66EE7 /* TrySarab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrySarab.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A08FA452D78ED3500A66EE7 /* TrySarabTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TrySarabTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A08FA4F2D78ED3500A66EE7 /* TrySarabUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TrySarabUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A5B7D582D7B921900F2AD34 /* PlayerStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerStateMachine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +80,7 @@
 		8A08FA232D78ED3400A66EE7 = {
 			isa = PBXGroup;
 			children = (
+				8A5B7D582D7B921900F2AD34 /* PlayerStateMachine.swift */,
 				8A08FA2E2D78ED3400A66EE7 /* TrySarab */,
 				8A08FA482D78ED3500A66EE7 /* TrySarabTests */,
 				8A08FA522D78ED3500A66EE7 /* TrySarabUITests */,
@@ -236,6 +242,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8A5B7D592D7B921900F2AD34 /* PlayerStateMachine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
