@@ -14,9 +14,11 @@ class GameScene: SKScene {
     var joystick : SKNode?
     var joystickKnob : SKNode?
     var cameraNode : SKCameraNode?
+    var attackButton: SKSpriteNode?
     
     // boolean
     var joystickAction = false
+    var isAttacking = false
     
     // Measure
     var knobRadius : CGFloat = 50.0
@@ -38,10 +40,16 @@ class GameScene: SKScene {
         cameraNode = childNode(withName: "cameraNode") as? SKCameraNode
         
         
-        playerStateMachine = GKStateMachine(states: [JumpingState(playerNode: player!),
+        if let button = childNode(withName: "attack") as? SKSpriteNode {
+            attackButton = button
+            attackButton?.position = CGPoint(x: self.frame.maxX - 120, y: self.frame.minY + 100)
+            attackButton?.zPosition = 100
+            attackButton?.isUserInteractionEnabled = false // عشان ما يتحرك بالغلط
+        }
+        
+        playerStateMachine = GKStateMachine(states: [
                                                      WalkingState(playerNode: player!),
                                                      IdleState(playerNode: player!),
-                                                     LandingState(playerNode: player!),
                                                      StunnedState(playerNode: player!),
                                                     ])
         playerStateMachine.enter(IdleState.self)
@@ -50,7 +58,6 @@ class GameScene: SKScene {
 
 // MARK: Touches
 extension GameScene  {
-    // Touch Began
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             if let joystickKnob = joystickKnob {
@@ -60,23 +67,26 @@ extension GameScene  {
             
             let location = touch.location(in: self)
             if !(joystick?.contains(location))! {
-                playerStateMachine.enter(JumpingState.self)
+                playerStateMachine.enter(IdleState.self)
+            }
+            
+            if let attackButton = attackButton, attackButton.contains(location) {
+                if let spriteNode = player as? SKSpriteNode {
+                    spriteNode.texture = SKTexture(imageNamed: "SarabAttack_Front")
+                }
+                isAttacking = true
             }
         }
     }
-    // Touch Moved
+    
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let joystick = joystick else { return }
         guard let joystickKnob = joystickKnob else { return }
-
         if !joystickAction { return }
-        // Distance
         for touch in touches {
             let position = touch.location(in: joystick)
-
             let length = sqrt(pow(position.y, 2) + pow(position.x, 2))
             let angle = atan2(position.y, position.x)
-
             if knobRadius > length {
                 joystickKnob.position = position
             } else {
@@ -84,9 +94,23 @@ extension GameScene  {
             }
         }
     }
-    // Touch Ended
+    
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
+            let location = touch.location(in: self)
+            
+            if let attackButton = attackButton, attackButton.contains(location) {
+                isAttacking = false
+
+                // إعادة تعيين الصورة بناءً على الحالة
+                if let spriteNode = player as? SKSpriteNode {
+                    spriteNode.texture = SKTexture(imageNamed: "SarabStanding_Front") // الصورة الأصلية
+                }
+
+                updatePlayerState()
+            }
+            
+            
             let xJoystickCoordinate = touch.location(in: joystick!).x
             let xLimit: CGFloat = 200.0
             if xJoystickCoordinate > -xLimit && xJoystickCoordinate < xLimit {
@@ -95,6 +119,7 @@ extension GameScene  {
         }
     }
 }
+
 // MARK: Action
 extension GameScene {
     func resetKnobPosition() {
@@ -104,40 +129,37 @@ extension GameScene {
         joystickKnob?.run(moveBack)
         joystickAction = false
     }
+    
+    func updatePlayerState() {
+        if isAttacking { return }
+
+        if let joystickKnob = joystickKnob, floor(abs(joystickKnob.position.x)) != 0 {
+            playerStateMachine.enter(WalkingState.self)
+        } else {
+            playerStateMachine.enter(IdleState.self)
+        }
+    }
 }
+
 // MARK: Game Loop
 extension GameScene {
     override func update(_ currentTime: TimeInterval) {
         let deltaTime = currentTime - previousTimeInterval
         previousTimeInterval = currentTime
         
-        
-        // Camera
         cameraNode?.position.x = player!.position.x
         joystick?.position.y = (cameraNode?.position.y)! - 100
         joystick?.position.x = (cameraNode?.position.x)! - 300
+        attackButton?.position = CGPoint(x: cameraNode!.position.x + (self.frame.maxX - 120), y: cameraNode!.position.y + (self.frame.minY + 100))
         
-        // Player movement
         guard let joystickKnob = joystickKnob else { return }
         let xPosition = Double(joystickKnob.position.x)
         let positivePosition = xPosition < 0 ? -xPosition : xPosition
         
-        if floor(positivePosition) != 0 {
-            if !(playerStateMachine.currentState is WalkingState) {
-                playerStateMachine.enter(WalkingState.self)
-            }
-        } else {
-            if !(playerStateMachine.currentState is IdleState) {
-                playerStateMachine.enter(IdleState.self)
-            }
+        // إذا الهجوم مو مفعّل، حدّث الحالة حسب الحركة
+        if !isAttacking {
+            updatePlayerState()
         }
-        
-//        if floor(positivePosition) != 0 {
-//            playerStateMachine.enter(WalkingState.self)
-//        } else {
-//            playerStateMachine.enter(IdleState.self)
-//
-//        }
         
         let displacement = CGVector(dx: deltaTime * xPosition * playerSpeed, dy: 0)
         let move = SKAction.move(by: displacement, duration: 0)
@@ -159,4 +181,5 @@ extension GameScene {
         player?.run(faceAction)
     }
 }
+
 
