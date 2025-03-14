@@ -20,25 +20,28 @@ class DabbEnemy: Enemy {
     override init(node: SKSpriteNode, hp: Int, damage: Int, textures: [SKTexture], speed: CGFloat) {
         super.init(node: node, hp: hp, damage: damage, textures: textures, speed: speed)
 
-        // ضبط حجم الضب
+        // ✅ ضبط حجم الضب
         node.size = CGSize(width: 809 / 15, height: 1024 / 15)
 
-        // ضبط الفيزياء
+        // ✅ ضبط الفيزياء
         node.physicsBody = SKPhysicsBody(rectangleOf: node.size)
-        node.physicsBody?.isDynamic = false // ✅ يمنع الضب من دفع سراب
+        node.physicsBody?.isDynamic = true
         node.physicsBody?.allowsRotation = false
         node.physicsBody?.friction = 1
         node.physicsBody?.restitution = 0
+
+        // ✅ أهم جزء: منع الضب من التأثير على سراب فيزيائيًا
         node.physicsBody?.categoryBitMask = PhysicsCategory.enemy
-        node.physicsBody?.collisionBitMask = PhysicsCategory.ground | PhysicsCategory.player
-        node.physicsBody?.contactTestBitMask = PhysicsCategory.player
-        node.physicsBody?.affectedByGravity = true // ✅ يخلي الضب يتأثر بالجاذبية
-        node.physicsBody?.linearDamping = 0.5 // ✅ يمنع الضب من الطيران فجأة
-        
-        
-        // تشغيل الحركة فورًا
+        node.physicsBody?.collisionBitMask = PhysicsCategory.ground // ✅ الضب يصطدم بالأرض فقط
+        node.physicsBody?.contactTestBitMask = PhysicsCategory.player // ✅ الضب يعرف متى يلمس سراب لكنه لا يدفعه
+
+        node.physicsBody?.affectedByGravity = true // ✅ الضب يتأثر بالجاذبية
+        node.physicsBody?.linearDamping = 1.0 // ✅ تقليل الدفع والانزلاق للضب
+        node.physicsBody?.mass = 1000 // ✅ جعل الضب ثقيلًا جدًا حتى لا يؤثر على سراب
+
+        // ✅ تشغيل الحركة فورًا
         startMoving()
-        startAnimation() // ✅ استخدام `SKAction.animate()` لتبديل الصور بدون وميض
+        startAnimation()
     }
 
     func startMoving() {
@@ -64,8 +67,7 @@ class DabbEnemy: Enemy {
                 SKAction.removeFromParent()
             ]))
 
-
-            // 🕒 إبلاغ `GameScene` بأن الضب مات ويجب إعادته
+            // 🕒 إبلاغ GameScene بأن الضب مات ويجب إعادته
             if let scene = node.scene as? GameScene {
                 scene.respawnDabbEnemy(after: 5)
             }
@@ -74,7 +76,7 @@ class DabbEnemy: Enemy {
         }
 
         // تطبيق تأثير الارتداد عند تلقي الضرر
-        node.physicsBody?.applyImpulse(CGVector(dx: -30 * direction, dy: 5))
+        node.physicsBody?.applyImpulse(CGVector(dx: -20 * direction, dy: 0))
 
         // منع تلقي ضرر متكرر بسرعة
         dmgCD = true
@@ -88,8 +90,8 @@ class DabbEnemy: Enemy {
     func respawnDabb() {
         guard let scene = node.scene as? GameScene else { return } // التأكد من أن الضب داخل المشهد
 
-        let newDabb = scene.spawnDabbEnemy() // استدعاء دالة توليد الضب من `GameScene`
-        print("🔄 الضب عاد مجددًا!")
+        _ = scene.spawnDabbEnemy() // ✅ إنشاء ضب جديد دون حذف القديم
+        print("🔄 تم إنشاء ضب جديد!")
     }
     
     

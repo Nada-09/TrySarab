@@ -38,7 +38,7 @@ class GameScene: SKScene {
     
     //didmove
     override func didMove(to view: SKView) {
-        self.physicsWorld.contactDelegate = self // ✅ ضروري ليتم استدعاء `didBegin(_ contact:)`
+        self.physicsWorld.contactDelegate = self // ✅ ضروري ليتم استدعاء didBegin(_ contact:)
         
         
         player = childNode(withName: "sarabBoy")
@@ -70,7 +70,21 @@ class GameScene: SKScene {
         fillHearts(count: 3)
         
         
-        spawnDabbEnemy()
+        dabb = spawnDabbEnemy() // ✅ تخزين الكائن المرجع حتى يمكن استخدامه لاحقًا
+        print("🚀 GameScene تم تحميله بنجاح!")
+        for node in self.children {
+            print("🔍 العقدة في المشهد: \(node.name ?? "بدون اسم")")
+        }
+        
+        // ✅ طباعة رسالة للتأكد أن spawnDabbEnemy() تعمل
+        print("🐊 تم استدعاء spawnDabbEnemy()")
+        
+        
+        // ✅ جعل الضب يظهر تلقائيًا كل 5 ثوانٍ
+        Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            _ = self?.spawnDabbEnemy() // ✅ إنشاء ضب جديد كل 5 ثوانٍ بدون تحذيرات
+            print("🔄 ضب جديد ظهر!")
+        }
     }
     
     
@@ -87,7 +101,7 @@ class GameScene: SKScene {
 
         addChild(newDabb.node)
         
-        self.dabb = newDabb // ✅ تخزين العدو في المتغير `dabb`
+        self.dabb = newDabb // ✅ تخزين العدو في المتغير dabb
         
         return newDabb
     }
@@ -164,7 +178,7 @@ extension GameScene  {
         for touch in touches {
             let location = touch.location(in: self)
             
-            // ✅ عند رفع الإصبع عن زر الهجوم، إيقاف حالة الهجوم وإرجاع `texture` الأصلي
+            // ✅ عند رفع الإصبع عن زر الهجوم، إيقاف حالة الهجوم وإرجاع texture الأصلي
             if let attackButton = attackButton, attackButton.contains(location) {
                 isAttacking = false
                 if let spriteNode = player as? SKSpriteNode {
@@ -183,7 +197,6 @@ extension GameScene  {
     }
 }
 
-
 //// MARK: Touches
 //extension GameScene  {
 //    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -192,24 +205,24 @@ extension GameScene  {
 //                let location = touch.location(in: joystick!)
 //                joystickAction = joystickKnob.frame.contains(location)
 //            }
-//            
+//
 //            let location = touch.location(in: self)
 //            if !(joystick?.contains(location))! {
 //                playerStateMachine.enter(IdleState.self)
 //            }
-//            
+//
 //            if let attackButton = attackButton, attackButton.contains(location) {
 //                isAttacking = true
 //                playerStateMachine.enter(AttackState.self) // ✅ بدلًا من تغيير الصورة يدويًا
 //                checkDabbCollision()
 //            }
-//            
+//
 //        }
-//        
+//
 //    }
-//    
-//    
-//    
+//
+//
+//
 //    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
 //        guard let joystick = joystick else { return }
 //        guard let joystickKnob = joystickKnob else { return }
@@ -225,11 +238,11 @@ extension GameScene  {
 //            }
 //        }
 //    }
-//    
+//
 //    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
 //        for touch in touches {
 //            let location = touch.location(in: self)
-//            
+//
 //            if let attackButton = attackButton, attackButton.contains(location) {
 //                isAttacking = false
 //
@@ -240,8 +253,8 @@ extension GameScene  {
 //
 //                updatePlayerState()
 //            }
-//            
-//            
+//
+//
 //            let xJoystickCoordinate = touch.location(in: joystick!).x
 //            let xLimit: CGFloat = 200.0
 //            if xJoystickCoordinate > -xLimit && xJoystickCoordinate < xLimit {
@@ -267,13 +280,12 @@ extension GameScene {
             let dabbAlive = dabb.takeDamage(direction: attackDirection)
 
             if !dabbAlive {
-                self.dabb = nil // ✅ تعيين `dabb` إلى `nil` بعد موته
+                self.dabb = nil // ✅ تعيين dabb إلى nil بعد موته
 
             }
         }
     }
 }
-
 
 // MARK: Action
 extension GameScene {
@@ -295,8 +307,6 @@ extension GameScene {
         }
     }
 }
-
-
 
 // MARK: Game Loop
 extension GameScene {
@@ -390,9 +400,3 @@ extension GameScene {
             }
         }
     }
-
-
-
-
-
-
