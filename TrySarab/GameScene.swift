@@ -38,14 +38,12 @@ class GameScene: SKScene {
     
     //didmove
     override func didMove(to view: SKView) {
-        self.physicsWorld.contactDelegate = self // ✅ ضروري ليتم استدعاء didBegin(_ contact:)
-        
+        self.physicsWorld.contactDelegate = self // ✅ ضروري ليتم استدعاء `didBegin(_ contact:)`
         
         player = childNode(withName: "sarabBoy")
         joystick = childNode(withName: "joyStick")
         joystickKnob = joystick?.childNode(withName: "knob")
         cameraNode = childNode(withName: "cameraNode") as? SKCameraNode
-        
         
         if let button = childNode(withName: "attack") as? SKSpriteNode {
             attackButton = button
@@ -62,13 +60,11 @@ class GameScene: SKScene {
         ])
         playerStateMachine.enter(IdleState.self)
         
-        
         // Hearts
         heartContainer.position = CGPoint(x: -300, y: 140)
         heartContainer.zPosition = 5
         cameraNode?.addChild(heartContainer)
         fillHearts(count: 3)
-        
         
         dabb = spawnDabbEnemy() // ✅ تخزين الكائن المرجع حتى يمكن استخدامه لاحقًا
         print("🚀 GameScene تم تحميله بنجاح!")
@@ -76,9 +72,8 @@ class GameScene: SKScene {
             print("🔍 العقدة في المشهد: \(node.name ?? "بدون اسم")")
         }
         
-        // ✅ طباعة رسالة للتأكد أن spawnDabbEnemy() تعمل
+        // ✅ طباعة رسالة للتأكد أن `spawnDabbEnemy()` تعمل
         print("🐊 تم استدعاء spawnDabbEnemy()")
-        
         
         // ✅ جعل الضب يظهر تلقائيًا كل 5 ثوانٍ
         Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
@@ -86,7 +81,6 @@ class GameScene: SKScene {
             print("🔄 ضب جديد ظهر!")
         }
     }
-    
     
     func spawnDabbEnemy() -> DabbEnemy {
         let dabbTexture1 = SKTexture(imageNamed: "Dabb_1")
@@ -101,11 +95,10 @@ class GameScene: SKScene {
 
         addChild(newDabb.node)
         
-        self.dabb = newDabb // ✅ تخزين العدو في المتغير dabb
+        self.dabb = newDabb // ✅ تخزين العدو في المتغير `dabb`
         
         return newDabb
     }
-    
     
     func respawnDabbEnemy(after delay: TimeInterval) {
         Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] timer in
@@ -126,18 +119,18 @@ class GameScene: SKScene {
         }
     }
     
-    
     func gameOver() {
         print("GAME OVER")
         let gameOverScene = GameScene(size: self.size)
         gameOverScene.scaleMode = self.scaleMode
         self.view?.presentScene(gameOverScene, transition: SKTransition.fade(withDuration: 1))
     }
-    
 }
 
+
+
 // MARK: Touches
-extension GameScene  {
+extension GameScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             let location = touch.location(in: self)
@@ -178,7 +171,7 @@ extension GameScene  {
         for touch in touches {
             let location = touch.location(in: self)
             
-            // ✅ عند رفع الإصبع عن زر الهجوم، إيقاف حالة الهجوم وإرجاع texture الأصلي
+            // ✅ عند رفع الإصبع عن زر الهجوم، إيقاف حالة الهجوم وإرجاع `texture` الأصلي
             if let attackButton = attackButton, attackButton.contains(location) {
                 isAttacking = false
                 if let spriteNode = player as? SKSpriteNode {
@@ -197,91 +190,42 @@ extension GameScene  {
     }
 }
 
-//// MARK: Touches
-//extension GameScene  {
-//    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-//        for touch in touches {
-//            if let joystickKnob = joystickKnob {
-//                let location = touch.location(in: joystick!)
-//                joystickAction = joystickKnob.frame.contains(location)
-//            }
-//
-//            let location = touch.location(in: self)
-//            if !(joystick?.contains(location))! {
-//                playerStateMachine.enter(IdleState.self)
-//            }
-//
-//            if let attackButton = attackButton, attackButton.contains(location) {
-//                isAttacking = true
-//                playerStateMachine.enter(AttackState.self) // ✅ بدلًا من تغيير الصورة يدويًا
-//                checkDabbCollision()
-//            }
-//
-//        }
-//
-//    }
-//
-//
-//
-//    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-//        guard let joystick = joystick else { return }
-//        guard let joystickKnob = joystickKnob else { return }
-//        if !joystickAction { return }
-//        for touch in touches {
-//            let position = touch.location(in: joystick)
-//            let length = sqrt(pow(position.y, 2) + pow(position.x, 2))
-//            let angle = atan2(position.y, position.x)
-//            if knobRadius > length {
-//                joystickKnob.position = position
-//            } else {
-//                joystickKnob.position = CGPoint(x: cos(angle) * knobRadius, y: sin(angle) * knobRadius)
-//            }
-//        }
-//    }
-//
-//    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-//        for touch in touches {
-//            let location = touch.location(in: self)
-//
-//            if let attackButton = attackButton, attackButton.contains(location) {
-//                isAttacking = false
-//
-//                // إعادة تعيين الصورة بناءً على الحالة
-//                if let spriteNode = player as? SKSpriteNode {
-//                    spriteNode.texture = SKTexture(imageNamed: "SarabStanding_Front") // الصورة الأصلية
-//                }
-//
-//                updatePlayerState()
-//            }
-//
-//
-//            let xJoystickCoordinate = touch.location(in: joystick!).x
-//            let xLimit: CGFloat = 200.0
-//            if xJoystickCoordinate > -xLimit && xJoystickCoordinate < xLimit {
-//                resetKnobPosition()
-//            }
-//        }
-//    }
-//}
-
 // MARK: Checking Collision with Dabb
 extension GameScene {
     func checkDabbCollision() {
-        
         guard let dabb = dabb else { return }
         guard let playerNode = player as? SKSpriteNode else { return }
         
         let playerPosition = playerNode.position
         let dabbPosition = dabb.node.position
-        let attackRange: CGFloat = 100.0  // 🔥 **فحص إذا كان اللاعب قريبًا من الضب**
+        let attackRange: CGFloat = 100.0
         
         if abs(playerPosition.x - dabbPosition.x) <= attackRange {
-            let attackDirection: CGFloat = playerIsFacingRight ? 1.0 : -1.0
-            let dabbAlive = dabb.takeDamage(direction: attackDirection)
-
-            if !dabbAlive {
-                self.dabb = nil // ✅ تعيين dabb إلى nil بعد موته
-
+            if isAttacking {
+                // حالة الهجوم: الضب يموت
+                let attackDirection: CGFloat = playerIsFacingRight ? 1.0 : -1.0
+                let dabbAlive = dabb.takeDamage(direction: attackDirection)
+                
+                if !dabbAlive {
+                    self.dabb = nil // الضب مات
+                }
+            } else {
+                // حالة عدم الهجوم: ينقص قلب
+                if heartsArray.count > 0 {
+                    let lostHeart = heartsArray.removeLast()
+                    lostHeart.removeFromParent()
+                }
+                
+                if heartsArray.isEmpty {
+                    gameOver() // إذا نفذت القلوب، نهاية اللعبة
+                }
+                
+                // إخفاء الضب بعد أن يلمس اللاعب
+                dabb.node.run(SKAction.sequence([
+                    SKAction.fadeOut(withDuration: 0.5),
+                    SKAction.removeFromParent()
+                ]))
+                self.dabb = nil
             }
         }
     }
@@ -321,21 +265,16 @@ extension GameScene {
         
         guard let joystickKnob = joystickKnob else { return }
         let xPosition = Double(joystickKnob.position.x)
-//        let positivePosition = xPosition < 0 ? -xPosition : xPosition
         
-        // إذا الهجوم مو مفعّل، حدّث الحالة حسب الحركة
         if !isAttacking {
             updatePlayerState()
         }
         
-        // ✅ تحريك اللاعب بناءً على موقع الجويستيك
         let displacement = CGVector(dx: deltaTime * xPosition * playerSpeed, dy: 0)
         let move = SKAction.move(by: displacement, duration: 0)
 
         var faceAction: SKAction!
         
-
-        // ✅ التحقق من الاتجاه لتغيير الوجهة
         if xPosition < 0 && playerIsFacingRight {
             playerIsFacingRight = false
             let faceMovement = SKAction.scaleX(to: -1, duration: 0.0)
@@ -348,55 +287,39 @@ extension GameScene {
             faceAction = move
         }
 
-        // ✅ تحريك اللاعب فقط إذا لم يكن في حالة الهجوم
         if !isAttacking {
             player?.run(faceAction)
         }
     }
-//        let movingRight = xPosition > 0
-//        let movingLeft = xPosition < 0
-//        if movingLeft && playerIsFacingRight {
-//            playerIsFacingRight = false
-//            let faceMovement = SKAction.scaleX(to: -1, duration: 0.0)
-//            faceAction = SKAction.sequence([move, faceMovement])
-//        }
-//        else if movingRight && !playerIsFacingRight {
-//            playerIsFacingRight = true
-//            let faceMovement = SKAction.scaleX(to: 1, duration: 0.0)
-//            faceAction = SKAction.sequence([move, faceMovement])
-//        } else {
-//            faceAction = move
-//        }
-//        player?.run(faceAction)
-    }
-    
-    // MARK: Handle Contact
-    extension GameScene: SKPhysicsContactDelegate {
-        func didBegin(_ contact: SKPhysicsContact) {
-            let bodyA = contact.bodyA
-            let bodyB = contact.bodyB
+}
 
-            if (bodyA.categoryBitMask == PhysicsCategory.player && bodyB.categoryBitMask == PhysicsCategory.enemy) ||
-               (bodyB.categoryBitMask == PhysicsCategory.player && bodyA.categoryBitMask == PhysicsCategory.enemy) {
-                
-                if isAttacking {
-                    if let dabb = dabb {
-                        dabb.node.run(SKAction.sequence([
-                            SKAction.fadeOut(withDuration: 0.5),
-                            SKAction.removeFromParent()
-                        ]))
-                        self.dabb = nil
-                    }
-                } else {
-                    if heartsArray.count > 0 {
-                        let lostHeart = heartsArray.removeLast()
-                        lostHeart.removeFromParent()
-                    }
+// MARK: Handle Contact
+extension GameScene: SKPhysicsContactDelegate {
+    func didBegin(_ contact: SKPhysicsContact) {
+        let bodyA = contact.bodyA
+        let bodyB = contact.bodyB
 
-                    if heartsArray.isEmpty {
-                        gameOver()
-                    }
+        if (bodyA.categoryBitMask == PhysicsCategory.player && bodyB.categoryBitMask == PhysicsCategory.enemy) ||
+           (bodyB.categoryBitMask == PhysicsCategory.player && bodyA.categoryBitMask == PhysicsCategory.enemy) {
+            
+            if isAttacking {
+                if let dabb = dabb {
+                    dabb.node.run(SKAction.sequence([
+                        SKAction.fadeOut(withDuration: 0.5),
+                        SKAction.removeFromParent()
+                    ]))
+                    self.dabb = nil
+                }
+            } else {
+                if heartsArray.count > 0 {
+                    let lostHeart = heartsArray.removeLast()
+                    lostHeart.removeFromParent()
+                }
+
+                if heartsArray.isEmpty {
+                    gameOver()
                 }
             }
         }
     }
+}
