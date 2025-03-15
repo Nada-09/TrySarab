@@ -32,17 +32,16 @@ class DabbEnemy: Enemy {
 
         // ✅ أهم جزء: منع الضب من التأثير على سراب فيزيائيًا
         node.physicsBody?.categoryBitMask = PhysicsCategory.enemy
-        node.physicsBody?.collisionBitMask = PhysicsCategory.ground // ✅ الضب يصطدم بالأرض فقط
-        node.physicsBody?.contactTestBitMask = PhysicsCategory.player // ✅ الضب يعرف متى يلمس سراب لكنه لا يدفعه
-
-        node.physicsBody?.affectedByGravity = true // ✅ الضب يتأثر بالجاذبية
-        node.physicsBody?.linearDamping = 1.0 // ✅ تقليل الدفع والانزلاق للضب
-        node.physicsBody?.mass = 1000 // ✅ جعل الضب ثقيلًا جدًا حتى لا يؤثر على سراب
-
-        // ✅ تشغيل الحركة فورًا
-        startMoving()
-        startAnimation()
-    }
+        node.physicsBody?.collisionBitMask = PhysicsCategory.ground // ✅ الآن الضب يصطدم بالأرض
+        node.physicsBody?.contactTestBitMask = PhysicsCategory.player
+        
+        node.physicsBody?.affectedByGravity = true // ✅ الضب يتأثر بالجاذبية لكنه لن يطير
+        node.physicsBody?.linearDamping = 1.0 // ✅ تقليل الانزلاق والسرعة الزائدة
+        node.physicsBody?.mass = 1000 // ✅ جعله ثقيلًا حتى لا يتحرك بطريقة غير طبيعية
+         
+         startMoving()
+         startAnimation()
+     }
 
     func startMoving() {
         let moveLeft = SKAction.moveBy(x: -speed * 100, y: 0, duration: 3) // ✅ تسريع الحركة
@@ -57,9 +56,9 @@ class DabbEnemy: Enemy {
     }
 
     override func takeDamage(direction: CGFloat) -> Bool {
-        if dmgCD { return false } // التأكد من أن العدو لا يتلقى ضررًا متكررًا سريعًا
+        if dmgCD { return false }
 
-        hp -= 10 // تقليل نقاط الصحة
+        hp -= 10
 
         if hp <= 0 {
             node.run(SKAction.sequence([
@@ -67,25 +66,27 @@ class DabbEnemy: Enemy {
                 SKAction.removeFromParent()
             ]))
 
-            // 🕒 إبلاغ GameScene بأن الضب مات ويجب إعادته
+            // ✅ إعادة توليد الضب بعد 3 ثوانٍ
             if let scene = node.scene as? GameScene {
-                scene.respawnDabbEnemy(after: 5)
+                scene.respawnDabbEnemy(after: 3)
             }
-            
-            return false // العدو مات
+
+            return false // ✅ الضب مات
         }
+        
+        
+        //        // ✅ تطبيق تأثير الارتداد عند تلقي الضرر
+        //        node.physicsBody?.applyImpulse(CGVector(dx: -20 * direction, dy: 0))
 
-        // تطبيق تأثير الارتداد عند تلقي الضرر
-        node.physicsBody?.applyImpulse(CGVector(dx: -20 * direction, dy: 0))
-
-        // منع تلقي ضرر متكرر بسرعة
         dmgCD = true
         let waitAction = SKAction.wait(forDuration: 1)
         let resetDmgCD = SKAction.run { self.dmgCD = false }
         node.run(SKAction.sequence([waitAction, resetDmgCD]))
 
-        return true // العدو لا يزال حيًا
+        return true
     }
+
+
     
     func respawnDabb() {
         guard let scene = node.scene as? GameScene else { return } // التأكد من أن الضب داخل المشهد

@@ -20,6 +20,7 @@ class GameScene: SKScene {
     // boolean
     var joystickAction = false
     var isAttacking = false
+    var isHit = false // ✅ متغير لمنع الضرر المتكرر
     
     // Measure
     var knobRadius : CGFloat = 50.0
@@ -67,6 +68,13 @@ class GameScene: SKScene {
         fillHearts(count: 3)
         
         dabb = spawnDabbEnemy() // ✅ تخزين الكائن المرجع حتى يمكن استخدامه لاحقًا
+        
+        player?.name = "Sarab" // ✅ تحديد اسم سراب
+        dabb?.node.name = "Dabb" // ✅ تحديد اسم الضب
+            
+        print("🎮 Sarab and Dabb names assigned successfully!")
+        
+        
         print("🚀 GameScene تم تحميله بنجاح!")
         for node in self.children {
             print("🔍 العقدة في المشهد: \(node.name ?? "بدون اسم")")
@@ -108,9 +116,12 @@ class GameScene: SKScene {
     }
     
     func fillHearts(count: Int) {
+        heartContainer.removeAllChildren() // ✅ حذف القلوب القديمة قبل الإضافة الجديدة
+        heartsArray.removeAll() // ✅ مسح المصفوفة لضمان عدم تكرار القلوب
+        
         for index in 1...count {
             let heart = SKSpriteNode(imageNamed: "heart")
-            heart.size = CGSize(width: 40, height: 40) // ✅ تعديل حجم القلوب
+            heart.size = CGSize(width: 40, height: 40)
             let xPosition = heart.size.width * CGFloat(index - 1)
             heart.position = CGPoint(x: xPosition, y: 0)
             heart.zPosition = 100
@@ -118,6 +129,62 @@ class GameScene: SKScene {
             heartContainer.addChild(heart)
         }
     }
+    
+    func loseHeart() {
+        if isHit { return }  // ✅ منع فقدان القلوب المتكرر
+        isHit = true
+
+        if !heartsArray.isEmpty {
+            let lastHeart = heartsArray.removeLast() // ✅ حذف القلب من المصفوفة
+            lastHeart.removeFromParent() // ✅ إزالته من المشهد
+
+            // ✅ إضافة وميض عند تلقي الضرر
+            player?.run(flashEffect())
+
+            // ✅ إذا انتهت القلوب، نهاية اللعبة
+            if heartsArray.isEmpty {
+                gameOver()
+            }
+        }
+
+        // ✅ منع الضرر المتكرر لمدة ثانيتين
+        Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { _ in
+            self.isHit = false
+        }
+    }
+    
+    func dying() {
+        let fadeOut = SKAction.fadeOut(withDuration: 0.5)
+        let gameOverScreen = SKAction.run {
+            let gameOverLabel = SKLabelNode(text: "Game Over")
+            gameOverLabel.fontSize = 50
+            gameOverLabel.fontColor = .red
+            gameOverLabel.position = CGPoint(x: 0, y: 0)
+            gameOverLabel.zPosition = 10
+            self.addChild(gameOverLabel)
+
+            Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { _ in
+                gameOverLabel.removeFromParent()
+                self.fillHearts(count: 3) // ✅ إعادة القلوب بعد الموت
+                self.player?.position = CGPoint(x: 0, y: 0)
+                self.player?.alpha = 1.0
+            }
+        }
+        
+        player?.run(SKAction.sequence([fadeOut, gameOverScreen]))
+    }
+    
+    
+    func flashEffect() -> SKAction {
+        return SKAction.repeat(.sequence([
+            .fadeAlpha(to: 0.5, duration: 0.1),
+            .wait(forDuration: 0.1),
+            .fadeAlpha(to: 1.0, duration: 0.1),
+            .wait(forDuration: 0.1)
+        ]), count: 5)
+    }
+    
+    
     
     func gameOver() {
         print("GAME OVER")
@@ -143,8 +210,8 @@ extension GameScene {
             // ✅ تحقق مما إذا كان اللاعب لمس زر الهجوم
             if let attackButton = attackButton, attackButton.contains(location) {
                 isAttacking = true
-                playerStateMachine.enter(AttackState.self) // ✅ إدخال سراب في حالة الهجوم
-                checkDabbCollision()
+                playerStateMachine.enter(AttackState.self)
+                checkDabbCollision() // ✅ إضافة دالة فحص الضب بعد الهجوم
             }
         }
     }
@@ -195,32 +262,24 @@ extension GameScene {
     func checkDabbCollision() {
         guard let dabb = dabb else { return }
         guard let playerNode = player as? SKSpriteNode else { return }
-        
+
         let playerPosition = playerNode.position
         let dabbPosition = dabb.node.position
-        let attackRange: CGFloat = 100.0
-        
+        let attackRange: CGFloat = 100.0  // المسافة التي يمكن لسراب ضرب الضب فيها
+
         if abs(playerPosition.x - dabbPosition.x) <= attackRange {
             if isAttacking {
-                // حالة الهجوم: الضب يموت
+                // ✅ إذا كانت سراب تهاجم، الضب يموت
                 let attackDirection: CGFloat = playerIsFacingRight ? 1.0 : -1.0
                 let dabbAlive = dabb.takeDamage(direction: attackDirection)
-                
+
                 if !dabbAlive {
-                    self.dabb = nil // الضب مات
+                    self.dabb = nil // ✅ إزالة الضب بعد موته
                 }
             } else {
-                // حالة عدم الهجوم: ينقص قلب
-                if heartsArray.count > 0 {
-                    let lostHeart = heartsArray.removeLast()
-                    lostHeart.removeFromParent()
-                }
+                // ✅ إذا لم تكن تهاجم، تفقد قلبًا ثم يختفي الضب
+                loseHeart()
                 
-                if heartsArray.isEmpty {
-                    gameOver() // إذا نفذت القلوب، نهاية اللعبة
-                }
-                
-                // إخفاء الضب بعد أن يلمس اللاعب
                 dabb.node.run(SKAction.sequence([
                     SKAction.fadeOut(withDuration: 0.5),
                     SKAction.removeFromParent()
@@ -296,29 +355,40 @@ extension GameScene {
 // MARK: Handle Contact
 extension GameScene: SKPhysicsContactDelegate {
     func didBegin(_ contact: SKPhysicsContact) {
-        let bodyA = contact.bodyA
-        let bodyB = contact.bodyB
-
-        if (bodyA.categoryBitMask == PhysicsCategory.player && bodyB.categoryBitMask == PhysicsCategory.enemy) ||
-           (bodyB.categoryBitMask == PhysicsCategory.player && bodyA.categoryBitMask == PhysicsCategory.enemy) {
+        guard let bodyA = contact.bodyA.node, let bodyB = contact.bodyB.node else { return }
+        
+        if (bodyA.name == "Sarab" && bodyB.name == "Dabb") || (bodyA.name == "Dabb" && bodyB.name == "Sarab") {
             
             if isAttacking {
-                if let dabb = dabb {
-                    dabb.node.run(SKAction.sequence([
+                // ✅ سراب تضرب الضب → الضب يختفي
+                if bodyA.name == "Dabb" {
+                    bodyA.run(SKAction.sequence([
                         SKAction.fadeOut(withDuration: 0.5),
                         SKAction.removeFromParent()
                     ]))
-                    self.dabb = nil
+                } else if bodyB.name == "Dabb" {
+                    bodyB.run(SKAction.sequence([
+                        SKAction.fadeOut(withDuration: 0.5),
+                        SKAction.removeFromParent()
+                    ]))
                 }
+                self.dabb = nil
             } else {
-                if heartsArray.count > 0 {
-                    let lostHeart = heartsArray.removeLast()
-                    lostHeart.removeFromParent()
-                }
+                // ✅ سراب لم تضرب الضب → تفقد قلب والضب يختفي
+                loseHeart()
 
-                if heartsArray.isEmpty {
-                    gameOver()
+                if bodyA.name == "Dabb" {
+                    bodyA.run(SKAction.sequence([
+                        SKAction.fadeOut(withDuration: 0.5),
+                        SKAction.removeFromParent()
+                    ]))
+                } else if bodyB.name == "Dabb" {
+                    bodyB.run(SKAction.sequence([
+                        SKAction.fadeOut(withDuration: 0.5),
+                        SKAction.removeFromParent()
+                    ]))
                 }
+                self.dabb = nil
             }
         }
     }

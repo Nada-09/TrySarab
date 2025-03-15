@@ -12,6 +12,8 @@ fileprivate let characterAnimationKey = "Sarab Animation"
 
 class PlayerState: GKState {
     unowned var playerNode: SKNode
+    var isAttacking = false // ✅ جعل `isAttacking` متاحًا داخل جميع الحالات
+
     
     init(playerNode : SKNode) {
         self.playerNode = playerNode
@@ -52,7 +54,7 @@ class WalkingState: PlayerState {
 
 class AttackState: PlayerState {
     override func isValidNextState(_ stateClass: AnyClass) -> Bool {
-        return !(stateClass is AttackState.Type) // لا يمكنه البقاء في AttackState للأبد
+        return !(stateClass is AttackState.Type) // ✅ لا يمكن البقاء في حالة الهجوم للأبد
     }
 
     let textures: Array<SKTexture> = [
@@ -65,11 +67,14 @@ class AttackState: PlayerState {
         playerNode.removeAction(forKey: characterAnimationKey)
         playerNode.run(action, withKey: characterAnimationKey)
 
-        // ✅ بعد تنفيذ الهجوم، يرجع إلى IdleState تلقائيًا بعد 0.3 ثانية
-        let waitAction = SKAction.wait(forDuration: 0.3)
+        isAttacking = true // ✅ تفعيل الهجوم مؤقتًا
+
+        let waitAction = SKAction.wait(forDuration: 0.5) // مدة الهجوم
         let returnToIdle = SKAction.run { [weak self] in
+            self?.isAttacking = false // ✅ إيقاف الهجوم بعد 0.5 ثانية
             self?.stateMachine?.enter(IdleState.self)
         }
+        
         playerNode.run(SKAction.sequence([waitAction, returnToIdle]))
     }
 }
