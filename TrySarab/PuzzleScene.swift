@@ -178,17 +178,25 @@ class PuzzleScene: SKScene {
             let timeString = String(format: "%.2f", timeSpent)
             
             print("✅ إجابة صحيحة! الوقت المستغرق: \(timeString) ثانية")
-            
+
             let correctLabel = SKLabelNode(text: "إجابة صحيحة! ⏳ \(timeString) ثانية")
             correctLabel.fontSize = 24
             correctLabel.fontColor = .green
             correctLabel.position = CGPoint(x: size.width/2, y: size.height/2 - 100)
             correctLabel.zPosition = 3
             addChild(correctLabel)
-            
+
+            // ✅ تحديث بيانات اللاعب بعد الإجابة الصحيحة
+            if let gameScene = self.view?.scene as? GameScene {
+                gameScene.correctAnswers += 1
+                gameScene.totalTimeSpent += timeSpent
+
+                print("📊 تحديث بيانات اللاعب:")
+                print("✅ correctAnswers: \(gameScene.correctAnswers)")
+                print("⏳ totalTimeSpent: \(gameScene.totalTimeSpent)")
+            }
             // إظهار زر "إغلاق اللغز" بعد الإجابة الصحيحة
             closePuzzleLabel?.isHidden = false
-            
         } else {
             // ❌ إجابة خاطئة (لا نحسب الوقت)
             print("❌ إجابة خاطئة! لن نحسب الوقت.")

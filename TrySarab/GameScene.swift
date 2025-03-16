@@ -1,18 +1,58 @@
 import SpriteKit
 import GameplayKit
 
+import CoreML
+
+class AIModel {
+    let model: PlayersLevel
+
+    init() {
+        let config = MLModelConfiguration()
+        model = try! PlayersLevel(configuration: config) // ✅ تحميل النموذج
+    }
+
+    func predictSkillLevel(correct: Int, wrong: Int, hints: Int, timeSpent: Double) -> String {
+        do {
+            // تأكدي من أن النموذج يستقبل Int64 أو Double حسب تعريفه
+            let prediction = try model.prediction(
+                correctAnswers: Int64(correct),
+                wrongAnswers: Int64(wrong),
+                hintCount: Int64(hints),
+                averageTimeSpent: timeSpent
+            )
+            return prediction.playerLevel // مثال: "Beginner" أو "Intermediate" أو "Advanced"
+        } catch {
+            print("⚠️ خطأ أثناء التنبؤ بمستوى اللاعب: \(error)")
+            return "Beginner" // إذا حدث خطأ، نفترض أن اللاعب مبتدئ
+        }
+    }
+}
+
+// MARK: - GameScene
 class GameScene: SKScene {
     
+    // MARK: AI-Related Variables
+    // هنا نجمع بيانات اللاعب
+    var correctAnswers = 0      // ✅ عدد الإجابات الصحيحة
+    var wrongAnswers = 0        // ❌ عدد الإجابات الخاطئة
+    var hintCount = 0           // 🔍 عدد التلميحات المستخدمة
+    var totalTimeSpent: Double = 0.0 // ⏳ إجمالي الوقت المستغرق في حل الألغاز
+    
+    // أنشئ كائن الـ AI مرة واحدة بدلًا من إنشائه كل مرة
+    let aiModel = AIModel()
+
+    // MARK: Other Game Variables
     var enemyDefeatedCount = 0
-    //Nodes
-    var player : SKNode?
-    var joystick : SKNode?
-    var joystickKnob : SKNode?
-    var cameraNode : SKCameraNode?
+    var player: SKNode?
+    var joystick: SKNode?
+    var joystickKnob: SKNode?
+    var cameraNode: SKCameraNode?
     var attackButton: SKSpriteNode?
     var dabbEnemies: [DabbEnemy] = []
     var firstDabb: SKNode? // ✅ المتغير المسؤول عن تحديد الضب الأول دائمًا
 
+    
+    
     // boolean
     var joystickAction = false
     var isAttacking = false
@@ -32,6 +72,23 @@ class GameScene: SKScene {
     
     // Player state
     var playerStateMachine : GKStateMachine!
+    
+    
+    func getPlayerSkillLevel() -> String {
+        let ai = AIModel()
+
+        // 🔍 طباعة القيم لمعرفة ماذا يحدث بالضبط
+        print("🔍 تحليل بيانات اللاعب قبل التنبؤ:")
+        print("✅ correctAnswers: \(correctAnswers)")
+        print("❌ wrongAnswers: \(wrongAnswers)")
+        print("⏳ totalTimeSpent: \(totalTimeSpent)")
+        print("💡 hintCount: \(hintCount)")
+
+        let predictedLevel = ai.predictSkillLevel(correct: correctAnswers, wrong: wrongAnswers, hints: hintCount, timeSpent: totalTimeSpent)
+
+        print("📢 مستوى اللاعب المتوقع من الذكاء الاصطناعي: \(predictedLevel)")
+        return predictedLevel
+    }
     
     //didmove
     override func didMove(to view: SKView) {
@@ -91,8 +148,18 @@ class GameScene: SKScene {
             self.dabbEnemies.append(newDabb)
             print("🔄 ضب جديد ظهر!")
         }
+        
+        // تجربة سريعة لتوقع النموذج
+        let testPrediction = aiModel.predictSkillLevel(
+            correct: correctAnswers,
+            wrong: wrongAnswers,
+            hints: hintCount,
+            timeSpent: totalTimeSpent
+        )
+        print("📢 توقع الذكاء الاصطناعي لمستوى اللاعب (عينة): \(testPrediction)")
     }
     
+    // MARK: - Spawning Enemies
     func spawnDabbEnemy() -> DabbEnemy {
         let dabbTexture1 = SKTexture(imageNamed: "Dabb_1")
         let dabbTexture2 = SKTexture(imageNamed: "Dabb_2")
@@ -117,6 +184,7 @@ class GameScene: SKScene {
         }
     }
     
+    // MARK: - Hearts
     func fillHearts(count: Int) {
         heartContainer.removeAllChildren()
         heartsArray.removeAll()
@@ -132,6 +200,7 @@ class GameScene: SKScene {
         }
     }
     
+    // MARK: - Damage & Game Over
     var enemyHitCooldown = [SKNode: TimeInterval]() // ✅ تتبع آخر مرة تسبب كل ضب في الضرر
 
     func loseHeart(from enemy: SKNode) {
@@ -196,19 +265,15 @@ class GameScene: SKScene {
         
         // 1) أنشئ عقدة Sprite بصورة GameOver (يجب أن تكون في Assets)
         let gameOverSprite = SKSpriteNode(imageNamed: "GameOver")
-        
-        // 2) ضعها في منتصف الشاشة
-      //  gameOverSprite.position = CGPoint(x: size.width / 2, y: size.height / 2)
         gameOverSprite.zPosition = 999 // اجعلها في المقدمة
         addChild(gameOverSprite)
         
         // 3) عطّل التفاعل إن أردت منع اللاعب من الحركة
         self.isUserInteractionEnabled = false
     }
-}
+    
 
-// MARK: Touches
-extension GameScene {
+    // MARK: - Touches
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             let location = touch.location(in: self)
@@ -270,10 +335,9 @@ extension GameScene {
             }
         }
     }
-}
+
 
 // MARK: Checking Collision with Dabb (Range-based Attack)
-extension GameScene {
     func checkDabbCollision() {
         guard let playerNode = player as? SKSpriteNode else { return }
         let playerPosition = playerNode.position
@@ -302,13 +366,10 @@ extension GameScene {
                         enemyDefeatedCount += 1
                         print("enemyDefeatedCount = \(enemyDefeatedCount)")
 
+
                         // إذا وصلنا 3 أو 5 أو 10 → أعرض اللغز
-                        if enemyDefeatedCount == 3 {
-                            startRandomQuestion(difficulty: "Easy")
-                        } else if enemyDefeatedCount == 5 {
-                            startRandomQuestion(difficulty: "Medium")
-                        } else if enemyDefeatedCount == 10 {
-                            startRandomQuestion(difficulty: "Hard")
+                        if enemyDefeatedCount == 3 || enemyDefeatedCount == 5 || enemyDefeatedCount == 10 {
+                            startRandomQuestionAI()
                         }
                     }
                 }
@@ -317,10 +378,8 @@ extension GameScene {
             }
         }
     }
-}
 
-// MARK: - تحريك اللاعب في كل فريم
-extension GameScene {
+    // MARK: - Update per frame
     override func update(_ currentTime: TimeInterval) {
         // 1) حساب الزمن المنقضي
         let deltaTime = currentTime - previousTimeInterval
@@ -385,13 +444,11 @@ extension GameScene: SKPhysicsContactDelegate {
             
             let enemyNode = (bodyA.name == "Dabb") ? bodyA : bodyB
 
+
             // ابحث عن هذا الضب في المصفوفة
             if let _ = dabbEnemies.first(where: { $0.node == enemyNode }) {
-                
                 if isAttacking {
-                    // إذا أردت قتل الضب عند اللمس + الهجوم بدلًا من checkDabbCollision،
-                    // يمكنك نقل منطق القتل هنا.
-                    // حالياً نتركه فارغاً لأن القتل يحصل في checkDabbCollision.
+                    // منطق القتل في checkDabbCollision
                 } else {
                     // إذا سراب لا يهاجم = ينقص قلب
                     loseHeart(from: enemyNode)
@@ -401,8 +458,48 @@ extension GameScene: SKPhysicsContactDelegate {
     }
 }
 
-// MARK: Puzzle
+// MARK: - Puzzle
 extension GameScene {
+    // الدالة التي تُظهر اللغز اعتمادًا على Core ML
+    func startRandomQuestionAI() {
+        // 1) احصلي على مستوى اللاعب من النموذج
+        let predictedLevel = aiModel.predictSkillLevel(
+            correct: correctAnswers,
+            wrong: wrongAnswers,
+            hints: hintCount,
+            timeSpent: totalTimeSpent
+        )
+        
+        // 2) اختاري من مجموعة الأسئلة بناءً على المستوى
+        var questionsPool: [QuizQuestion] = []
+        
+        switch predictedLevel {
+        case "Beginner":
+            questionsPool = easyQuestions
+        case "Intermediate":
+            questionsPool = mediumQuestions
+        case "Advanced":
+            questionsPool = hardQuestions
+        default:
+            // لو حدث خطأ أو لم يتعرف
+            questionsPool = easyQuestions
+        }
+        
+        // 3) اختيار سؤال عشوائي
+        guard let randomQuestion = questionsPool.randomElement() else {
+            print("لا توجد أسئلة لمستوى \(predictedLevel)")
+            return
+        }
+        
+        // 4) عرض اللغز
+        showPuzzle(
+            question: randomQuestion.question,
+            choices: randomQuestion.choices,
+            correctAnswer: randomQuestion.correctAnswer,
+            hint: randomQuestion.hint
+        )
+    }
+    
     func showPuzzle(question: String,
                     choices: [String],
                     correctAnswer: String,
@@ -417,40 +514,15 @@ extension GameScene {
         puzzleScene.correctAnswer = correctAnswer
         puzzleScene.hintText = hint
         
+        // نصيحة: يمكنكِ تمرير self كـ Delegate لمشهد PuzzleScene
+        // كي يُخبركِ puzzleScene بالنتيجة (صح/خطأ/تلميح) لتحديث correctAnswers وغيرها
+        
         self.view?.presentScene(puzzleScene, transition: .fade(withDuration: 1.0))
     }
 }
 
-extension GameScene {
-    func startRandomQuestion(difficulty: String) {
-        // اختر سؤالاً عشوائياً
-        var questionsPool: [QuizQuestion] = []
-        
-        switch difficulty {
-        case "Easy":
-            questionsPool = easyQuestions
-        case "Medium":
-            questionsPool = mediumQuestions
-        case "Hard":
-            questionsPool = hardQuestions
-        default:
-            questionsPool = easyQuestions
-        }
-        
-        guard let randomQuestion = questionsPool.randomElement() else {
-            print("لا توجد أسئلة في المستوى \(difficulty)")
-            return
-        }
-        
-        showPuzzle(
-            question: randomQuestion.question,
-            choices: randomQuestion.choices,
-            correctAnswer: randomQuestion.correctAnswer,
-            hint: randomQuestion.hint
-        )
-    }
-}
 
+// MARK: - Player State Updates
 extension GameScene {
     func updatePlayerState() {
         if isAttacking { return }

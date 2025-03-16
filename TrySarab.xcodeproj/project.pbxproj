@@ -29,16 +29,37 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		8A08FA2C2D78ED3400A66EE7 /* TrySarab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrySarab.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		8A08FA452D78ED3500A66EE7 /* TrySarabTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TrySarabTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		8A08FA4F2D78ED3500A66EE7 /* TrySarabUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TrySarabUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A08FA2C2D78ED3400A66EE7 /* TrySarab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = TrySarab.app; path = "/Users/nadaabdullah/Desktop/TrySarab/build/Debug-iphoneos/TrySarab.app"; sourceTree = "<absolute>"; };
+		8A08FA452D78ED3500A66EE7 /* TrySarabTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = TrySarabTests.xctest; path = "/Users/nadaabdullah/Desktop/TrySarab/build/Debug-iphoneos/TrySarab.app/PlugIns/TrySarabTests.xctest"; sourceTree = "<absolute>"; };
+		8A08FA4F2D78ED3500A66EE7 /* TrySarabUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = TrySarabUITests.xctest; path = "/Users/nadaabdullah/Desktop/TrySarab/build/Debug-iphoneos/TrySarabUITests-Runner.app/PlugIns/TrySarabUITests.xctest"; sourceTree = "<absolute>"; };
 		8A1604DA2D869C8600DE60FD /* PuzzleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleManager.swift; sourceTree = "<group>"; };
 		8A5B7D582D7B921900F2AD34 /* PlayerStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerStateMachine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		8A1605332D86F59000DE60FD /* Exceptions for "TrySarab" folder in "TrySarabTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				PlayersLevel.mlmodel,
+			);
+			target = 8A08FA442D78ED3500A66EE7 /* TrySarabTests */;
+		};
+		8A1605342D86F59000DE60FD /* Exceptions for "TrySarab" folder in "TrySarabUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				PlayersLevel.mlmodel,
+			);
+			target = 8A08FA4E2D78ED3500A66EE7 /* TrySarabUITests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8A08FA2E2D78ED3400A66EE7 /* TrySarab */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8A1605332D86F59000DE60FD /* Exceptions for "TrySarab" folder in "TrySarabTests" target */,
+				8A1605342D86F59000DE60FD /* Exceptions for "TrySarab" folder in "TrySarabUITests" target */,
+			);
 			path = TrySarab;
 			sourceTree = "<group>";
 		};
@@ -87,18 +108,7 @@
 				8A08FA2E2D78ED3400A66EE7 /* TrySarab */,
 				8A08FA482D78ED3500A66EE7 /* TrySarabTests */,
 				8A08FA522D78ED3500A66EE7 /* TrySarabUITests */,
-				8A08FA2D2D78ED3400A66EE7 /* Products */,
 			);
-			sourceTree = "<group>";
-		};
-		8A08FA2D2D78ED3400A66EE7 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				8A08FA2C2D78ED3400A66EE7 /* TrySarab.app */,
-				8A08FA452D78ED3500A66EE7 /* TrySarabTests.xctest */,
-				8A08FA4F2D78ED3500A66EE7 /* TrySarabUITests.xctest */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -205,7 +215,7 @@
 			mainGroup = 8A08FA232D78ED3400A66EE7;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 8A08FA2D2D78ED3400A66EE7 /* Products */;
+			productRefGroup = 8A08FA232D78ED3400A66EE7;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
