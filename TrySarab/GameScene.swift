@@ -193,9 +193,17 @@ class GameScene: SKScene {
     
     func gameOver() {
         print("GAME OVER")
-        let gameOverScene = GameScene(size: self.size)
-        gameOverScene.scaleMode = self.scaleMode
-        self.view?.presentScene(gameOverScene, transition: SKTransition.fade(withDuration: 1))
+        
+        // 1) أنشئ عقدة Sprite بصورة GameOver (يجب أن تكون في Assets)
+        let gameOverSprite = SKSpriteNode(imageNamed: "GameOver")
+        
+        // 2) ضعها في منتصف الشاشة
+      //  gameOverSprite.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        gameOverSprite.zPosition = 999 // اجعلها في المقدمة
+        addChild(gameOverSprite)
+        
+        // 3) عطّل التفاعل إن أردت منع اللاعب من الحركة
+        self.isUserInteractionEnabled = false
     }
 }
 
