@@ -59,12 +59,14 @@ class DabbEnemy: Enemy {
         if dmgCD { return false }
 
         hp -= 10
+        print("Dabb HP after hit = \(hp)")
 
         if hp <= 0 {
             node.run(SKAction.sequence([
                 SKAction.fadeOut(withDuration: 0.5),
                 SKAction.removeFromParent()
             ]))
+            print("Dabb died. Removing from parent.")
 
             // ✅ إعادة توليد الضب بعد 3 ثوانٍ
             if let scene = node.scene as? GameScene {
