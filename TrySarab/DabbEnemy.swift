@@ -27,7 +27,7 @@ class DabbEnemy: Enemy {
         node.physicsBody = SKPhysicsBody(rectangleOf: node.size)
         node.physicsBody?.isDynamic = true
         node.physicsBody?.allowsRotation = false
-        node.physicsBody?.friction = 1
+        node.physicsBody?.friction = 0.5
         node.physicsBody?.restitution = 0
 
         // ✅ أهم جزء: منع الضب من التأثير على سراب فيزيائيًا
@@ -36,8 +36,8 @@ class DabbEnemy: Enemy {
         node.physicsBody?.contactTestBitMask = PhysicsCategory.player
         
         node.physicsBody?.affectedByGravity = true // ✅ الضب يتأثر بالجاذبية لكنه لن يطير
-        node.physicsBody?.linearDamping = 1.0 // ✅ تقليل الانزلاق والسرعة الزائدة
-        node.physicsBody?.mass = 1000 // ✅ جعله ثقيلًا حتى لا يتحرك بطريقة غير طبيعية
+        node.physicsBody?.linearDamping = 5.0 // ✅ تقليل الانزلاق والسرعة الزائدة
+        node.physicsBody?.mass = 100 // ✅ جعله ثقيلًا حتى لا يتحرك بطريقة غير طبيعية
          
          startMoving()
          startAnimation()

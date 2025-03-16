@@ -25,7 +25,7 @@ class IdleState: PlayerState {
     override func isValidNextState(_ stateClass: AnyClass) -> Bool {
         return !(stateClass is IdleState.Type)
     }
-    let textures = SKTexture(imageNamed: "SarabStanding_Front")
+    let textures = SKTexture(imageNamed: "SarabBoy_Standing")
     lazy var action = { SKAction.animate(with: [textures], timePerFrame: 0.1)} ()
     override func didEnter(from previousState: GKState?) {
         playerNode.removeAction(forKey: characterAnimationKey)
@@ -39,10 +39,10 @@ class WalkingState: PlayerState {
         return !(stateClass is WalkingState.Type)
     }
     let textures: Array<SKTexture> = [
-        SKTexture(imageNamed: "Boy_Walk1"),
-        SKTexture(imageNamed: "Boy_Walk2"),
-        SKTexture(imageNamed: "Boy_Walk3"),
-        SKTexture(imageNamed: "Boy_Walk4")
+        SKTexture(imageNamed: "SarabBoy_Walk_1"),
+        SKTexture(imageNamed: "SarabBoy_Walk_2"),
+        SKTexture(imageNamed: "SarabBoy_Walk_3"),
+        SKTexture(imageNamed: "SarabBoy_Walk_4")
     ]
     lazy var action = { SKAction.repeatForever(.animate(with: textures, timePerFrame: 0.1)) }()
     override func didEnter(from previousState: GKState?) {
@@ -58,7 +58,7 @@ class AttackState: PlayerState {
     }
 
     let textures: Array<SKTexture> = [
-        SKTexture(imageNamed: "Boy_Hit")
+        SKTexture(imageNamed: "SarabBoy_Hit")
     ]
     
     lazy var action = { SKAction.animate(with: textures, timePerFrame: 0.1) }()

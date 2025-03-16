@@ -15,7 +15,9 @@ class GameScene: SKScene {
     var joystickKnob : SKNode?
     var cameraNode : SKCameraNode?
     var attackButton: SKSpriteNode?
-    var dabb: DabbEnemy?
+    var dabbEnemies: [DabbEnemy] = []
+    var firstDabb: SKNode? // ✅ المتغير المسؤول عن تحديد الضب الأول دائمًا
+
     
     // boolean
     var joystickAction = false
@@ -67,13 +69,13 @@ class GameScene: SKScene {
         cameraNode?.addChild(heartContainer)
         fillHearts(count: 3)
         
-        dabb = spawnDabbEnemy() // ✅ تخزين الكائن المرجع حتى يمكن استخدامه لاحقًا
-        
+        let newDabb = spawnDabbEnemy() // إنشاء ضب جديد
+
         player?.name = "Sarab" // ✅ تحديد اسم سراب
-        dabb?.node.name = "Dabb" // ✅ تحديد اسم الضب
-            
+        newDabb.node.name = "Dabb"    // تسمية الضب
+        dabbEnemies.append(newDabb)   // إضافته للمصفوفة
+
         print("🎮 Sarab and Dabb names assigned successfully!")
-        
         
         print("🚀 GameScene تم تحميله بنجاح!")
         for node in self.children {
@@ -83,9 +85,12 @@ class GameScene: SKScene {
         // ✅ طباعة رسالة للتأكد أن `spawnDabbEnemy()` تعمل
         print("🐊 تم استدعاء spawnDabbEnemy()")
         
-        // ✅ جعل الضب يظهر تلقائيًا كل 5 ثوانٍ
+        
         Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            _ = self?.spawnDabbEnemy() // ✅ إنشاء ضب جديد كل 5 ثوانٍ بدون تحذيرات
+            guard let self = self else { return }
+            let newDabb = self.spawnDabbEnemy()
+            newDabb.node.name = "Dabb" // <-- مهم جدًا
+            self.dabbEnemies.append(newDabb)
             print("🔄 ضب جديد ظهر!")
         }
     }
@@ -103,15 +108,17 @@ class GameScene: SKScene {
 
         addChild(newDabb.node)
         
-        self.dabb = newDabb // ✅ تخزين العدو في المتغير `dabb`
+    //    self.dabb = newDabb // ✅ تخزين العدو في المتغير `dabb`
         
         return newDabb
     }
     
     func respawnDabbEnemy(after delay: TimeInterval) {
-        Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] timer in
+        Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
             guard let self = self else { return }
-            self.dabb = self.spawnDabbEnemy() // ✅ إعادة توليد الضب بعد انتهاء المؤقت
+            let newDabb = self.spawnDabbEnemy()
+            newDabb.node.name = "Dabb"
+            self.dabbEnemies.append(newDabb)
         }
     }
     
@@ -130,26 +137,36 @@ class GameScene: SKScene {
         }
     }
     
-    func loseHeart() {
-        if isHit { return }  // ✅ منع فقدان القلوب المتكرر
-        isHit = true
+    var enemyHitCooldown = [SKNode: TimeInterval]() // ✅ تتبع آخر مرة تسبب كل ضب في الضرر
+
+    func loseHeart(from enemy: SKNode) {
+        let currentTime = CFAbsoluteTimeGetCurrent() // ✅ الحصول على الوقت الحالي
+
+        // ✅ التأكد من أن الضب لا يسبب ضررًا مستمرًا كل ثانية
+        if let lastHitTime = enemyHitCooldown[enemy], currentTime - lastHitTime < 1.5 {
+            return
+        }
+
+        // ✅ تسجيل وقت الضرر الجديد لهذا الضب
+        enemyHitCooldown[enemy] = currentTime
 
         if !heartsArray.isEmpty {
-            let lastHeart = heartsArray.removeLast() // ✅ حذف القلب من المصفوفة
-            lastHeart.removeFromParent() // ✅ إزالته من المشهد
+            let lastHeart = heartsArray.removeLast()
+            lastHeart.removeFromParent()
 
             // ✅ إضافة وميض عند تلقي الضرر
             player?.run(flashEffect())
 
-            // ✅ إذا انتهت القلوب، نهاية اللعبة
+            // ✅ إذا انتهت القلوب، إنهاء اللعبة
             if heartsArray.isEmpty {
                 gameOver()
             }
         }
 
-        // ✅ منع الضرر المتكرر لمدة ثانيتين
-        Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { _ in
-            self.isHit = false
+        // ✅ تعطيل الضرر من هذا الضب مؤقتًا
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self = self else { return }
+            self.enemyHitCooldown.removeValue(forKey: enemy) // ✅ إزالة الضب من قائمة الحماية بعد 1.5 ثانية
         }
     }
     
@@ -242,7 +259,7 @@ extension GameScene {
             if let attackButton = attackButton, attackButton.contains(location) {
                 isAttacking = false
                 if let spriteNode = player as? SKSpriteNode {
-                    spriteNode.texture = SKTexture(imageNamed: "SarabStanding_Front")
+                    spriteNode.texture = SKTexture(imageNamed: "SarabBoy_Standing")
                 }
                 updatePlayerState()
             }
@@ -260,31 +277,32 @@ extension GameScene {
 // MARK: Checking Collision with Dabb
 extension GameScene {
     func checkDabbCollision() {
-        guard let dabb = dabb else { return }
         guard let playerNode = player as? SKSpriteNode else { return }
-
         let playerPosition = playerNode.position
-        let dabbPosition = dabb.node.position
-        let attackRange: CGFloat = 100.0  // المسافة التي يمكن لسراب ضرب الضب فيها
+        let attackRange: CGFloat = 100.0
 
-        if abs(playerPosition.x - dabbPosition.x) <= attackRange {
-            if isAttacking {
-                // ✅ إذا كانت سراب تهاجم، الضب يموت
-                let attackDirection: CGFloat = playerIsFacingRight ? 1.0 : -1.0
-                let dabbAlive = dabb.takeDamage(direction: attackDirection)
-
-                if !dabbAlive {
-                    self.dabb = nil // ✅ إزالة الضب بعد موته
+        for dabb in dabbEnemies {
+            let dabbPosition = dabb.node.position
+            if abs(playerPosition.x - dabbPosition.x) <= attackRange {
+                // إذا سراب تهاجم من مسافة
+                if isAttacking {
+                    // سراب تضرب الضب → الضب يختفي بدون فقد قلب
+                    let attackDirection: CGFloat = playerIsFacingRight ? 1.0 : -1.0
+                    let dabbAlive = dabb.takeDamage(direction: attackDirection)
+                    
+                    if !dabbAlive {
+                        dabb.node.run(SKAction.sequence([
+                            SKAction.fadeOut(withDuration: 0.5),
+                            SKAction.removeFromParent()
+                        ]))
+                        // أزل الضب من المصفوفة
+                        if let index = dabbEnemies.firstIndex(where: { $0.node == dabb.node }) {
+                            dabbEnemies.remove(at: index)
+                        }
+                    }
                 }
-            } else {
-                // ✅ إذا لم تكن تهاجم، تفقد قلبًا ثم يختفي الضب
-                loseHeart()
-                
-                dabb.node.run(SKAction.sequence([
-                    SKAction.fadeOut(withDuration: 0.5),
-                    SKAction.removeFromParent()
-                ]))
-                self.dabb = nil
+                // إذا لم تكن تهاجم (!isAttacking) فلا نفعل شيئًا هنا،
+                // لأن فقدان القلب يحصل فقط عند التلامس الفعلي في didBegin(_ contact:).
             }
         }
     }
@@ -314,40 +332,54 @@ extension GameScene {
 // MARK: Game Loop
 extension GameScene {
     override func update(_ currentTime: TimeInterval) {
+        // 1) حساب الزمن المنقضي (Delta Time)
         let deltaTime = currentTime - previousTimeInterval
         previousTimeInterval = currentTime
         
-        cameraNode?.position.x = player!.position.x
-        joystick?.position.y = (cameraNode?.position.y)! - 100
-        joystick?.position.x = (cameraNode?.position.x)! - 300
-        attackButton?.position = CGPoint(x: cameraNode!.position.x + (self.frame.maxX - 120), y: cameraNode!.position.y + (self.frame.minY + 100))
+        // 2) تحريك الكاميرا والـJoystick وزر الهجوم مع حركة اللاعب
+        if let playerNode = player {
+            cameraNode?.position.x = playerNode.position.x
+        }
+        joystick?.position.y = (cameraNode?.position.y ?? 0) - 100
+        joystick?.position.x = (cameraNode?.position.x ?? 0) - 300
         
-        guard let joystickKnob = joystickKnob else { return }
-        let xPosition = Double(joystickKnob.position.x)
+        if let cameraNode = cameraNode {
+            attackButton?.position = CGPoint(
+                x: cameraNode.position.x + (self.frame.maxX - 120),
+                y: cameraNode.position.y + (self.frame.minY + 100)
+            )
+        }
         
+        // 3) إذا لم يكن اللاعب في حالة هجوم، حدّث حالته (Idle/Walking)
         if !isAttacking {
             updatePlayerState()
         }
         
-        let displacement = CGVector(dx: deltaTime * xPosition * playerSpeed, dy: 0)
-        let move = SKAction.move(by: displacement, duration: 0)
-
-        var faceAction: SKAction!
+        // 4) الحصول على موضع الـJoystick للتحكم في حركة اللاعب
+        guard let joystickKnob = joystickKnob else { return }
+        let xPosition = Double(joystickKnob.position.x)
         
+        // 5) حساب الإزاحة (Displacement) بناءً على قيمة الـJoystick وسرعة اللاعب
+        let displacement = CGVector(dx: deltaTime * xPosition * playerSpeed, dy: 0)
+        let moveAction = SKAction.move(by: displacement, duration: 0)
+        
+        // 6) تحديد ما إذا كنا بحاجة لقلب اتجاه اللاعب (يمين/يسار)
+        var finalAction: SKAction
         if xPosition < 0 && playerIsFacingRight {
             playerIsFacingRight = false
-            let faceMovement = SKAction.scaleX(to: -1, duration: 0.0)
-            faceAction = SKAction.sequence([move, faceMovement])
+            let flipLeft = SKAction.scaleX(to: -1, duration: 0.0)
+            finalAction = SKAction.sequence([moveAction, flipLeft])
         } else if xPosition > 0 && !playerIsFacingRight {
             playerIsFacingRight = true
-            let faceMovement = SKAction.scaleX(to: 1, duration: 0.0)
-            faceAction = SKAction.sequence([move, faceMovement])
+            let flipRight = SKAction.scaleX(to: 1, duration: 0.0)
+            finalAction = SKAction.sequence([moveAction, flipRight])
         } else {
-            faceAction = move
+            finalAction = moveAction
         }
-
+        
+        // 7) تنفيذ حركة اللاعب فقط إذا لم يكن في حالة هجوم
         if !isAttacking {
-            player?.run(faceAction)
+            player?.run(finalAction)
         }
     }
 }
@@ -356,39 +388,28 @@ extension GameScene {
 extension GameScene: SKPhysicsContactDelegate {
     func didBegin(_ contact: SKPhysicsContact) {
         guard let bodyA = contact.bodyA.node, let bodyB = contact.bodyB.node else { return }
-        
-        if (bodyA.name == "Sarab" && bodyB.name == "Dabb") || (bodyA.name == "Dabb" && bodyB.name == "Sarab") {
-            
-            if isAttacking {
-                // ✅ سراب تضرب الضب → الضب يختفي
-                if bodyA.name == "Dabb" {
-                    bodyA.run(SKAction.sequence([
-                        SKAction.fadeOut(withDuration: 0.5),
-                        SKAction.removeFromParent()
-                    ]))
-                } else if bodyB.name == "Dabb" {
-                    bodyB.run(SKAction.sequence([
-                        SKAction.fadeOut(withDuration: 0.5),
-                        SKAction.removeFromParent()
-                    ]))
-                }
-                self.dabb = nil
-            } else {
-                // ✅ سراب لم تضرب الضب → تفقد قلب والضب يختفي
-                loseHeart()
 
-                if bodyA.name == "Dabb" {
-                    bodyA.run(SKAction.sequence([
+        // إذا صار تلامس بين سراب وضب
+        if (bodyA.name == "Sarab" && bodyB.name == "Dabb") || (bodyA.name == "Dabb" && bodyB.name == "Sarab") {
+            let enemyNode = (bodyA.name == "Dabb") ? bodyA : bodyB
+
+            // ابحث عن هذا الضب في المصفوفة
+            if let _ = dabbEnemies.first(where: { $0.node == enemyNode }) {
+                
+                if isAttacking {
+                    // 1) إذا سراب تهاجم = الضب يموت بدون فقد قلب
+                    enemyNode.run(SKAction.sequence([
                         SKAction.fadeOut(withDuration: 0.5),
                         SKAction.removeFromParent()
                     ]))
-                } else if bodyB.name == "Dabb" {
-                    bodyB.run(SKAction.sequence([
-                        SKAction.fadeOut(withDuration: 0.5),
-                        SKAction.removeFromParent()
-                    ]))
+                    if let index = dabbEnemies.firstIndex(where: { $0.node == enemyNode }) {
+                        dabbEnemies.remove(at: index)
+                    }
+                } else {
+                    // 2) إذا سراب لا تهاجم = ينقص قلب + الضب يكمل طريقه
+                    loseHeart(from: enemyNode)
+                    // لا تحذف الضب من المشهد أو من المصفوفة هنا
                 }
-                self.dabb = nil
             }
         }
     }
